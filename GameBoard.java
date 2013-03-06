@@ -1,3 +1,4 @@
+import java.util.HashSet;
 
 public class GameBoard {
 	//int array to store the state of the board.
@@ -62,6 +63,11 @@ public class GameBoard {
 		
 	}
 	
+	public GameBoard(int[][] initialBoard, Amazon[] amazons) {
+		this.board = initialBoard;
+		this.Amazons = amazons;
+	}
+	
 	public void moveAmazon(int amazon, int row, int column) {
 		board[Amazons[amazon].row][Amazons[amazon].column]=0;
 		board[row][column] = (amazon<4)?-1:1;
@@ -83,6 +89,103 @@ public class GameBoard {
 			toReturn += "]\n";
 		}
 		return toReturn;
+	}
+	
+	public GameBoard copyOf() {
+		int[][] newBoard = new int[10][10];
+		Amazon[] newAmazons = new Amazon[8];
+		for(int i=0; i<10; i++) {
+			for(int j=0; j<10; j++) {
+				newBoard[i][j] = this.board[i][j];
+			}
+		}
+		for(int i=0; i<8; i++) {
+			newAmazons[i] = new Amazon(this.Amazons[i].row, this.Amazons[i].column, this.Amazons[i].id);
+		}
+		return new GameBoard(newBoard, newAmazons);
+	}
+	
+	public HashSet<Integer> ourSpaces() {
+		HashSet<Integer> spaces = new HashSet<Integer>();
+		for(int i=0; i<4; i++) {
+			spaces.addAll(moveableSpaces(Amazons[i]));
+		}
+		
+		return spaces;
+	}
+	
+	public HashSet<Integer> theirSpaces() {
+		HashSet<Integer> spaces = new HashSet<Integer>();
+		for(int i=4; i<8; i++) {
+			spaces.addAll(moveableSpaces(Amazons[i]));
+		}
+		
+		return spaces;
+	}
+	
+	private HashSet<Integer> moveableSpaces(Amazon A) {
+		HashSet<Integer> spaces = new HashSet<Integer>();
+
+		int column = A.column;
+		int row = A.row;
+		
+		//Moves Right
+		for(int i=column+1; i < 10; i++) {
+			if(board[row][i]==0) {	//If the spot is empty
+				spaces.add(row*10+i);
+			} else break;
+		}
+		
+		//Moves Down
+		for(int i=row+1; i < 10; i++) {
+			if(board[i][column]==0) {	//If the spot is empty
+				spaces.add(i*10+column);
+			} else break;
+		}
+		
+		//Moves Left
+		for(int i=column-1; i >= 0; i--) {
+			if(board[row][i]==0) {	//If the spot is empty
+				spaces.add(row*10+i);
+			} else break;
+		}
+		
+		//Moves Up
+		for(int i=row-1; i >= 0; i--) {
+			if(board[i][column]==0) {	//If the spot is empty
+				spaces.add(i*10+column);
+			} else break;
+		}
+		
+		//Moves Down-Right
+		for(int i=column+1, j=row+1; i < 10 && j < 10; i++, j++) {
+			if(board[j][i]==0) {	//If the spot is empty
+				spaces.add(j*10+i);
+			} else break;
+		}
+		
+		//Moves Down-Left
+		for(int i=column-1, j=row+1; i >= 0 && j < 10; i--, j++) {
+			if(board[j][i]==0) {	//If the spot is empty
+				spaces.add(j*10+i);
+			} else break;
+		}
+		
+		//Moves Up-Left
+		for(int i=column-1, j=row-1; i >= 0 && j >= 0; i--, j--) {
+			if(board[j][i]==0) {	//If the spot is empty
+				spaces.add(j*10+i);
+			} else break;
+		}
+		
+		//Moves Up-Right
+		for(int i=column+1, j=row-1; i < 10 && j >= 0; i++, j--) {
+			if(board[j][i]==0) {	//If the spot is empty
+				spaces.add(j*10+i);
+			} else break;
+		}
+		
+		return spaces;
 	}
 	
 }
