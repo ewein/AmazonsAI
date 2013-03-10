@@ -162,8 +162,7 @@ public class AIplayer implements GamePlayer {
         
         if(type.equals(GameMessage.ACTION_ROOM_JOINED))
         {
-        	//TODO:
-        	// do something here when we first join the room 
+        	onJoinRoom(xml);
         }
         else if (type.equals(GameMessage.ACTION_GAME_START))		// handle game start
         {
@@ -204,7 +203,7 @@ public class AIplayer implements GamePlayer {
     		    board.fireArrow(2, 1);
     		    
     		    System.out.println(board);
-    		    System.out.println(GreedyBestSearch());
+    		    System.out.println(getNextMove());
        		}
         	
         	System.out.println("Game Start: " + msg.msg);
@@ -215,6 +214,20 @@ public class AIplayer implements GamePlayer {
         }        
  
 		return true;
+	}
+	
+	//handle the response of joining a room
+	private void onJoinRoom(IXMLElement xml){
+		IXMLElement usrlist = xml.getFirstChildNamed("usrlist");
+		int ucount = usrlist.getAttribute("ucount", -1);
+		
+		Enumeration ch = usrlist.enumerateChildren();
+		while(ch.hasMoreElements()){
+			IXMLElement usr = (IXMLElement)ch.nextElement();
+			int id = usr.getAttribute("id", -1); 
+			String name = usr.getAttribute("name", "NO!");  
+		}
+	 
 	}
 
 	@Override
