@@ -1,3 +1,4 @@
+package ubco.ai.games;
 
 public class Move {
 	int amazon_id;

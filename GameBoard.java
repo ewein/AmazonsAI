@@ -1,3 +1,5 @@
+package ubco.ai.games;
+
 import java.util.HashSet;
 
 public class GameBoard {
@@ -66,6 +68,15 @@ public class GameBoard {
 	public GameBoard(int[][] initialBoard, Amazon[] amazons) {
 		this.board = initialBoard;
 		this.Amazons = amazons;
+	}
+	
+	public void moveOpponent(int fromX, int fromY, int toX, int toY, boolean whitePlayer)
+	{
+		board[fromX][fromY] = 0;
+		if(whitePlayer)
+			board[toX][toY] = -1;
+		else
+			board[toX][toY] = 1;
 	}
 	
 	public void moveAmazon(int amazon, int row, int column) {

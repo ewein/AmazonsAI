@@ -1,3 +1,5 @@
+package ubco.ai.games;
+
 import java.util.ArrayList;
 
 public class Amazon {
