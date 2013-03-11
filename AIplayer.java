@@ -30,8 +30,17 @@ public class AIplayer implements GamePlayer {
 		this.passwd = passwd;
 		gameClient = new GameClient(name, passwd, this);
 	    
+		// setup up the board 
+		board = new GameBoard(whitePlayer);
+	    board.moveAmazon(0, 1, 0);
+	    
+	    board.fireArrow(2, 0);
+	    board.fireArrow(1, 1);
+	    board.fireArrow(1, 2);
+	    board.fireArrow(2, 1);
+		
 		// join a open room
-	    roomList = gameClient.getRoomLists();  
+	 /*   roomList = gameClient.getRoomLists();  
 	    for(int i=0; i<roomList.size(); i++) 
 	    {
 	    	if(roomList.get(i).userCount < 2)
@@ -43,7 +52,7 @@ public class AIplayer implements GamePlayer {
 	    		break;
 	    	}
 	    }
-	     	    	  
+	     */	    	  
 	}
 		
 	public void sendToServer(String action, int roomID, int posX, int posY, int arow, int acol, int qfr, int qfc)
@@ -89,8 +98,10 @@ public class AIplayer implements GamePlayer {
 		aX = c - 97;
 		aY = Integer.parseInt(amove.substring(1, amove.length()));
 		
+		int amazonId = board.getAmazonId(qfX, qfY);
+		
 		// move opponent amazon and fire arrow
-		board.moveOpponent(qfX, qfY, qX, qY, whitePlayer);
+		board.moveOpponent(amazonId, qfX, qfY, qX, qY, whitePlayer);
 		board.fireArrow(aX, aY);
 	}
 	
@@ -201,10 +212,7 @@ public class AIplayer implements GamePlayer {
     		    board.fireArrow(1, 1);
     		    board.fireArrow(1, 2);
     		    board.fireArrow(2, 1);
-    		    
-    		    System.out.println(board);
-    		    System.out.println(getNextMove());
-       		}
+    		}
         	
         	System.out.println("Game Start: " + msg.msg);
         }

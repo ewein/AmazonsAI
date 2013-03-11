@@ -1,3 +1,5 @@
+package ubco.ai.games;
+
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Graphics;

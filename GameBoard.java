@@ -14,13 +14,13 @@ public class GameBoard {
 	//Incrementing the row, moves a player down.
 	//Incrementing the column, moves a player right.
 	public int[][] board;
-	
+	public chessBoard gameBoard = null;
 	
 	public Amazon[] Amazons;	//An array of all the amazons on the board. 
 								//Indexes 0-3 store the positions of our amazon players.
 								//Indexes 4-7 store the positions of the opponents players.
-	
 	public GameBoard(boolean firstPlayer) {
+		this.gameBoard = new chessBoard();
 		board = new int[10][10];
 		if(firstPlayer) {
 			board[6][0] = -1;
@@ -70,23 +70,48 @@ public class GameBoard {
 		this.Amazons = amazons;
 	}
 	
-	public void moveOpponent(int fromX, int fromY, int toX, int toY, boolean whitePlayer)
+	public int getAmazonId(int x, int y)
+	{
+		int id = 0;
+		for(int i = 0; i < Amazons.length; i++)
+		{
+			if(Amazons[i].row == x && Amazons[i].column == y)
+			{
+				id = Amazons[i].id;
+				break;
+			}
+		}
+		
+		return id;
+	}
+	
+	public void moveOpponent(int id, int fromX, int fromY, int toX, int toY, boolean whitePlayer)
 	{
 		board[fromX][fromY] = 0;
 		if(whitePlayer)
+		{
 			board[toX][toY] = -1;
+			gameBoard.moveTheirPieces(id, toX, toY);
+		}
 		else
+		{
 			board[toX][toY] = 1;
+			gameBoard.moveTheirPieces(id, toX, toY);
+		}
+		
+		Amazons[id].updateCoords(toX, toY);
 	}
 	
 	public void moveAmazon(int amazon, int row, int column) {
 		board[Amazons[amazon].row][Amazons[amazon].column]=0;
 		board[row][column] = (amazon<4)?-1:1;
 		Amazons[amazon].updateCoords(row, column);
+		gameBoard.moveOurPieces(amazon, row, column);
 	}
 	
 	public void fireArrow(int x, int y) {
 		board[x][y]=2;
+		gameBoard.fireArrow(x, y);
 	}
 	
 	public String toString() {
