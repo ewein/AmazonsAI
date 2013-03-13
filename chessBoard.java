@@ -157,7 +157,7 @@ public class chessBoard extends JFrame
 			
 			//set up all starting positions for their amazons
 			theirAmazons[0] = new Piece();
-			theirAmazons[0].setFrame((0*size), (4*size), size, size);
+			theirAmazons[0].setFrame((0*size), (3*size), size, size);
 			
 			theirAmazons[1] = new Piece();
 			theirAmazons[1].setFrame((3*size), (0*size), size, size);
@@ -166,7 +166,7 @@ public class chessBoard extends JFrame
 			theirAmazons[2].setFrame((6*size), (0*size), size, size);
 			
 			theirAmazons[3] = new Piece();
-			theirAmazons[3].setFrame((9*size), (4*size), size, size);
+			theirAmazons[3].setFrame((9*size), (3*size), size, size);
 			
 			//setup squares
 			int count = 0;

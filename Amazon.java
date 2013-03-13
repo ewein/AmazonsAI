@@ -20,7 +20,6 @@ public class Amazon {
 	
 	public ArrayList<MoveAndBoard> getPossibleMoves(GameBoard current) {
 		ArrayList<MoveAndBoard> successors = new ArrayList<MoveAndBoard>();
-		
 		//Moves Right
 		for(int i=column+1; i < 10; i++) {
 			if(current.board[row][i]==0) {	//If the spot is empty
@@ -36,7 +35,7 @@ public class Amazon {
 				}
 			} else break;
 		}
-		
+				
 		//Moves Down
 		for(int i=row+1; i < 10; i++) {
 			if(current.board[i][column]==0) {	//If the spot is empty
