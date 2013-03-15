@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.Scanner;
 
 public class AIplayer implements GamePlayer {
 
@@ -25,45 +26,65 @@ public class AIplayer implements GamePlayer {
 	String name = "";
 	String passwd = "";
 	chessBoard gameBoard;
+	AI ai = null;
 
-	
-	public AIplayer(String name, String passwd) {
-		  
+	public AIplayer(String name, String passwd) 
+	{	  
 		this.gameBoard = new chessBoard();
 		this.name = name;
 		this.passwd = passwd;
-
+		this.ai = new AI(board);
+		// setup server game
 		gameClient = new GameClient(name, passwd, this);
-		
-	    roomList = gameClient.getRoomLists();
+		roomList = gameClient.getRoomLists();
 
 		// join a particular room (room 0)
 		//gameClient.roomList.get(0);
-	
+		
 		// join the first open room
-	    for(int i=0; i<roomList.size(); i++) 
-	    {
-	    	if(roomList.get(i).userCount < 2)
-	    	{
-	    		currentRoom = gameClient.roomList.get(i); 
-	    		roomID = currentRoom.roomID;
-	    		gameClient.joinGameRoom(currentRoom.roomName);
+		for(int i=0; i<roomList.size(); i++) 
+		{
+		  	if(roomList.get(i).userCount < 2)
+		   	{
+		   		currentRoom = gameClient.roomList.get(i); 
+		   		roomID = currentRoom.roomID;
+		   		gameClient.joinGameRoom(currentRoom.roomName);
 		    	System.out.println("Joined Room: " + roomList.get(i).roomName);
-	    		break;
-	    	}
-	    }	  
+		  		break;
+		  	}
+		 }
+			  
 	}
 		
 	public void sendToServer(String action, int roomID, int posX, int posY, int arow, int acol, int qfr, int qfc){
+		/*try {
+		    Thread.sleep(4000);
+		} catch(InterruptedException ex) {
+		    Thread.currentThread().interrupt();
+		}*/
+	
 		String actionMsg = "<action type='" +  action + "'>";
 		Character c = new Character((char) (97 + qfr));
+		char xFrom = c;
 		actionMsg = actionMsg + "<queen move='" + c.charValue() + String.valueOf(qfc) + "-";  
-		c = new Character((char)(97 + posX)); 
+		c = new Character((char)(97 + posX));
+		char xTo = c;
 		actionMsg = actionMsg + c.charValue() + String.valueOf(posY) + "'>" + "</queen> ";
 		c = new Character((char) (97 + arow));
+		char arrowX = c;
 		actionMsg = actionMsg + "<arrow move='" + c.charValue() + String.valueOf(acol) + "'>" + "</arrow>";
 		actionMsg = actionMsg + "</action>";
 		System.out.println(actionMsg);
+		
+		if(whitePlayer)
+		{
+			gameBoard.writeMove("white", "White player moved from " + xFrom + qfc + " to " + xTo + posY + " and fired arrow to " + arrowX + acol);
+		}
+		else
+		{
+			gameBoard.writeMove("black", "Black player moved from " + xFrom + qfc + " to " + xTo + posY + " and fired arrow to " + arrowX + acol);
+		}
+		
 		String msg = ServerMessage.compileGameMessage(GameMessage.MSG_GAME, roomID, actionMsg);
 		gameClient.sendToServer(msg, true); 
 	}
@@ -81,18 +102,21 @@ public class AIplayer implements GamePlayer {
 		int qY = 0;
 				
 		char c = qmove.charAt(3);
+		char xTo = c;
 		qX = 9 - (c - 97); 
 		qY = Integer.parseInt(qmove.substring(4,5));
 	
 		int qfX = 0;
 		int qfY = 0;
 		c = qmove.charAt(0);
+		char xFrom = c;
 		qfX = 9 - (c - 97);
 		qfY = Integer.parseInt(qmove.substring(1, 2));
 		
 		int aX = 0;
 		int aY = 0;
 		c = amove.charAt(0);
+		char arrowX = c;
 		aX = 9 - (c - 97);
 		aY = Integer.parseInt(amove.substring(1, amove.length()));
 		
@@ -100,8 +124,22 @@ public class AIplayer implements GamePlayer {
 		
 		// move opponent amazon and fire arrow
 		board.moveOpponent(amazonId, qfX, qfY, qX, qY, whitePlayer);
+		if(whitePlayer)
+		{
+			gameBoard.writeMove("black", "Black player moved from " + xFrom + qfY + " to " + xTo + qY + " and fired arrow to " + arrowX + aY);
+		}
+		else
+		{
+			gameBoard.writeMove("white", "White player moved from " + xFrom + qfY + " to " + xTo + qY + " and fired arrow to " + arrowX + aY);
+		}
+		
 		board.fireArrow(aX, aY);
-		gameBoard.moveTheirPieces(amazonId-4, qX, qY);
+		if(whitePlayer){
+			gameBoard.moveTheirPieces(amazonId-4, qX, qY);
+		}
+		else{
+			gameBoard.moveOurPieces(amazonId-4, qX, qY);
+		}
 		gameBoard.fireArrow(aX, aY);
 		
 		moveOurAmazon();
@@ -110,7 +148,7 @@ public class AIplayer implements GamePlayer {
 	public void moveOurAmazon()
 	{
 		// get our move based on the opponents move	
-		MoveAndBoard nextMove = getNextMove();
+		MoveAndBoard nextMove = ai.getNextMove(this.board);
 		int y = nextMove.newMove.col;
 		int x = (nextMove.newMove.row);
 		int arrowY = nextMove.newMove.arrow_col;
@@ -120,92 +158,24 @@ public class AIplayer implements GamePlayer {
 		int fromY = this.board.Amazons[aId].column;
 		this.board = nextMove.newBoard;
 		moveGamePieceGui(aId, x, y, arrowX, arrowY);
-		
-		
+	
 		// send move to server
 		sendToServer(GameMessage.ACTION_MOVE, roomID, 9-x, y, 9-arrowX, arrowY, 9-fromX, fromY);
 	}
 	
-	public MoveAndBoard getNextMove() {
-		MoveAndBoard nextMove = GreedyBestSearch();
-		return nextMove;
-	}
-	
-	private MoveAndBoard GreedyBestSearch() {
-		
-		ArrayList<MoveAndBoard> searchResults = new ArrayList<MoveAndBoard>();
-		for(int i=0; i<4; i++) {
-			searchResults.addAll(board.Amazons[i].getPossibleMoves(board));
-		}
-		
-		MoveAndBoard newState = defaultHeuristic(searchResults);
-		
-		return newState;
-	}
-	
-	private MoveAndBoard defaultHeuristic(ArrayList<MoveAndBoard> moves) {
-		ArrayList<Integer> evaluations = new ArrayList<Integer>(moves.size());
-		for(int i=0; i<moves.size(); i++) {
-			evaluations.add(i, new Integer(evaluateHeuristic(moves.get(i).newBoard)));
-		}
-		
-		Integer max = Collections.max(evaluations);
-		return moves.get(evaluations.indexOf(max));
-	}
-
-	private MoveAndBoard randomHeuristic(ArrayList<MoveAndBoard> moves){
-		ArrayList<Integer> evaluations = new ArrayList<Integer>(moves.size());
-		for(int i=0; i<moves.size(); i++) {
-			evaluations.add(i, new Integer(evaluateRandomHeuristic(moves.get(i).newBoard)));
-		}
-			
-		Integer max = Collections.max(evaluations);
-		return moves.get(evaluations.indexOf(max));
-	}
-
-	private int evaluateRandomHeuristic(GameBoard board){
-		Random rand = new Random();
-		return rand.nextInt(10000);
-	}
-
-	private int evaluateHeuristic(GameBoard board) {
-		int sum = getSpaceConfiguration(board);
-	//	sum += getOurFreedom(board);
-		return sum;
-	}
-
-	/**
-	* Returns the score of the board as determined by freedom. For a single amazon their freedom is (8 - the number of arrows/queens beside them). This calculates the freedom of each of our amazons.
-	* @param board
-	* @return Returns the overall freedom of our amazons. The bigger the better.
-	*/
-	private int getOurFreedom(GameBoard board){
-		return board.getOurFreedoms();
-	}
-
-	/**
-	* This will return how many of the spaces are ours minus the number of spaces that are theirs.
-	* @param board
-	* @return Number of spaces that are ours - spaces theirs. Larger the better
-	*/
-	private int getSpaceConfiguration(GameBoard board){
-		//Set containing all the board squares movable to by our Amazon players.
-		HashSet<Integer> A = new HashSet<Integer>();
-		A = board.ourSpaces();
-	
-		//Set containing all the board squares movable to by the opponents players.
-		HashSet<Integer> B = new HashSet<Integer>();
-		B = board.theirSpaces();
-	
-		HashSet<Integer> C = new HashSet<Integer>(A);
-		A.removeAll(B);
-		B.removeAll(C);
-	
-		return A.size()-B.size();
-	}
-	
 	public static void main(String[] args) {
-		 AIplayer client = new AIplayer("FooGoos", "amazons"); 
+		System.out.println("Do you want to play against the computer? (Yes or No): ");
+		Scanner scan = new Scanner(System.in);
+		String input = scan.nextLine();
+		if(input.equals("Yes"))
+		{
+			Human humanPlayer = new Human();
+			humanPlayer.getOpponentMove();
+		}
+		else
+		{
+			AIplayer client = new AIplayer("FooGoos", "amazons"); 
+		}
 	}
 
 	@Override
@@ -244,14 +214,17 @@ public class AIplayer implements GamePlayer {
     				this.whitePlayer = true;
     				
         			// setup up the board 
-        			this.board = new GameBoard(whitePlayer);    				
+        			this.board = new GameBoard(whitePlayer);
+        			gameBoard.writeWhiteAndBlack(whitePlayer);
+        			System.out.println("Game Start: " + msg.msg);
         			moveOurAmazon();
     			}
     			else{
-    				
     				this.whitePlayer = false;
         			// setup up the board 
         			this.board = new GameBoard(whitePlayer);
+        			gameBoard.writeWhiteAndBlack(whitePlayer);
+        			System.out.println("Game Start: " + msg.msg);
     			}
 
     		}
@@ -260,6 +233,7 @@ public class AIplayer implements GamePlayer {
         }
         else if(type.equals(GameMessage.ACTION_MOVE))		// handle an opponent move
         {
+			//System.out.println("GOT OPPONENT MOVE");
             this.handleOpponentMove(xml); 
         }        
  
@@ -269,7 +243,12 @@ public class AIplayer implements GamePlayer {
 	private void moveGamePieceGui(int aId, int x, int y, int arrowX, int arrowY)
 	{
 		// move piece on GUI
-		gameBoard.moveOurPieces(aId, x, y);
+		if(whitePlayer){
+			gameBoard.moveOurPieces(aId, x, y);
+		}
+		else{
+			gameBoard.moveTheirPieces(aId, x, y);
+		}
 		gameBoard.fireArrow(arrowX, arrowY);
 	}
 	

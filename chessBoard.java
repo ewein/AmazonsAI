@@ -7,28 +7,17 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.geom.RectangularShape;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JTextPane;
 
 public class chessBoard extends JFrame
 {
@@ -37,6 +26,9 @@ public class chessBoard extends JFrame
 	Board board;;
 	JPanel leftLabels;
 	JPanel topLabels;
+	JPanel rightSide;
+	JPanel bottom;
+	JTextPane text;
 	chessBoard()
 	{
 		super();
@@ -52,23 +44,41 @@ public class chessBoard extends JFrame
 	public void fireArrow(int row, int col){
 		board.fireArrowB(row, col);
 	}
+	public void writeWhiteAndBlack(boolean whitePlayer){
+		board.whiteAndBlack(whitePlayer);
+	}
+	public void writeMove(String player, String message){
+		board.addMove(player, message);
+	}
 	
 	protected void createGUI()
 	{
-		//create graphical client
-		board = new Board();
-		this.add(board);
-		this.setSize(757, 781);
+		
+		//background color
+		Color background = new Color(74, 101, 60);
+		//this.setSize(786, 806);
+		this.setSize(1450,798);
 		this.setResizable(false);
 		this.setVisible(true);
-		Container contentPane = getContentPane();
+		
+		//Container contentPane = getContentPane();
 		leftLabels = new LabelLeft();
-		leftLabels.setBackground(Color.white);
+		leftLabels.setBackground(background);
 		topLabels = new LabelTop();
-		topLabels.setBackground(Color.white);
-		contentPane.add(board, "Center");
-		contentPane.add(leftLabels, "West");
-		contentPane.add(topLabels, "North");
+		topLabels.setBackground(background);
+		rightSide = new rightSide();
+		rightSide.setBackground(background);
+		//rightSide.setSize(100, 0);
+		bottom = new rightSide();
+		bottom.setBackground(background);
+		board = new Board();
+		board.setBackground(background);
+		
+		this.add(board, "Center");
+		this.add(leftLabels, "West");
+		this.add(topLabels, "North");
+		this.add(rightSide, "East");
+		this.add(bottom, "South");
 	}
 
 	public class LabelLeft extends JPanel
@@ -80,9 +90,11 @@ public class chessBoard extends JFrame
 			drawLabels(g2d);
 		}
 		protected void drawLabels(Graphics2D g2d){
-			g2d.setColor(Color.black);
+			g2d.setColor(Color.white);
+			String[] letters = {"j", "i", "h", "g", "f", "e", "d", "c", "b", "a"};
 			for(int i = 0; i < 10; i++){
-				g2d.drawString(String.valueOf(i), 0, ((i*75) + 30));
+				//g2d.drawString(String.valueOf(i), 0, ((i*75) + 30));
+				g2d.drawString(letters[i], 0, ((i*75) + 30));
 			}
 		}
 	}
@@ -95,10 +107,23 @@ public class chessBoard extends JFrame
 			drawLabels(g2d);
 		}
 		protected void drawLabels(Graphics2D g2d){
-			g2d.setColor(Color.black);
+			g2d.setColor(Color.white);
 			for(int i = 0; i < 10; i++){
 				g2d.drawString(String.valueOf(i), ((i*75) + 30), 10);
 			}
+		}
+	}
+	
+	public class rightSide extends JPanel
+	{
+		public void paintComponent(Graphics g)
+		{
+			super.paintComponent(g);
+			Graphics2D g2d = (Graphics2D)g;
+			
+		}
+		protected void drawLabels(Graphics2D g2d){
+			
 		}
 	}
 	
@@ -112,17 +137,25 @@ public class chessBoard extends JFrame
 		int numRows = 10;
 		int numCols = 10;
 		int size = 75;
-
+		JTextPane text;
+		String message = "";
+		ArrayList<String> whiteMoves;
+		ArrayList<String> blackMoves;
+		
 		Board()
 		{
 			super();
+			//text = new JTextPane();
+			whiteMoves = new ArrayList<String>();
+			blackMoves = new ArrayList<String>();
 			ourAmazons = new Piece[4];
 			theirAmazons = new Piece[4];
 			squares = new Square[100];
 			//create a list of arrows and there might be an arrow in every square. Well not really but whatever
 			arrows = new ArrayList<Arrow>();
 			setupBoard();
-
+			
+			//this.add(text, "right");
 		}
 		
 		public void moveOurPieceB(int id, int row, int col){
@@ -135,8 +168,26 @@ public class chessBoard extends JFrame
 		}
 		public void fireArrowB(int row, int col){
 			Arrow arr = new Arrow();
-			arr.setFrame((col*size)+20, (row*size)+20, 30, 30);
+			arr.setFrame((col*size)+10, (row*size)+10, 50, 50);
 			arrows.add(arr);
+		}
+		public void whiteAndBlack(boolean whitePlayer){
+			if(whitePlayer){
+				message = "You are the White player!";
+			}
+			else{
+				message = "You are the Black player!";
+			}
+			repaint();
+		}
+		public void addMove(String player, String message){
+			if(player.equals("white")){
+				whiteMoves.add(message);
+			}
+			else{
+				blackMoves.add(message);
+			}
+			repaint();
 		}
 		
 		//set each piece frame before game starts
@@ -198,7 +249,7 @@ public class chessBoard extends JFrame
 			}
 			//moveOurPieceB(0, 0, 1);
 		}
-
+		
 		protected Piece getActivePiece()
 		{
 			for(int i = 0; i < ourAmazons.length; i++)
@@ -217,6 +268,20 @@ public class chessBoard extends JFrame
 			drawGrid(g2d);
 			drawPieces(g2d);
 			drawArrows(g2d);
+			g2d.setColor(Color.white);
+			g2d.drawString(message, 1000, 40);
+			drawMoves(g2d);
+		}
+		
+		protected void drawMoves(Graphics2D g2d){
+			g2d.setColor(Color.white);
+			for(int i = 0; i < whiteMoves.size(); i++){
+				g2d.drawString(whiteMoves.get(i), 770, (i*15)+60);
+			}
+			for(int i = 0; i < blackMoves.size(); i++){
+				g2d.drawString(blackMoves.get(i), 1100, (i*15)+60);
+			}
+			
 		}
 		
 		protected void drawArrows(Graphics2D g2d){
